@@ -60,6 +60,22 @@ CPUCaps get_cpu_caps(void)
         if (edx & (1 << 26)) // SSE2
             caps |= CPU_CAP_SSE2;
     }
+
+    /* Leaf 7: Extended features (AVX2, AVX-512F) */
+    if (max_leaf >= 7) {
+# ifdef _MSC_VER
+        __cpuidex(cpu_info, 7, 0);
+        ebx = (unsigned int)cpu_info[1];
+# elif defined(__GNUC__) || defined(__clang__)
+        __cpuid_count(7, 0, eax, ebx, ecx, edx);
+# endif
+        if (ebx & (1 << 5))  // AVX2
+            caps |= CPU_CAP_AVX2;
+        if (ebx & (1 << 16)) // AVX-512F
+            caps |= CPU_CAP_AVX512F;
+        if (ebx & (1 << 17)) // AVX-512DQ
+            caps |= CPU_CAP_AVX512DQ;
+    }
 #endif
 
     return caps;

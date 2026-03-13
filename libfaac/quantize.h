@@ -47,6 +47,11 @@ enum {
     SF_OFFSET = 100,
 };
 
+static inline void prefetch0(const volatile void *p)
+{
+	asm volatile ("prefetcht0 %[p]" : : [p] "m" (*(const volatile char *)p));
+}
+
 int BlocQuant(CoderInfo *coderInfo, faac_real *xr, AACQuantCfg *aacquantCfg);
 void CalcBW(unsigned *bw, int rate, SR_INFO *sr, AACQuantCfg *aacquantCfg);
 void BlocGroup(faac_real *xr, CoderInfo *coderInfo, AACQuantCfg *aacquantCfg);

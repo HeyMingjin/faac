@@ -19,7 +19,15 @@ libm = cc.find_library('m', required: false)
 
 cpu_family = target_machine.cpu_family()
 
-config_h.set('HAVE_SSE2', (cpu_family in ['x86', 'x86_64']) and config_h.get('HAVE_IMMINTRIN_H'))
+# SIMD: higher levels require lower levels for remainder handling
+# AVX512 -> AVX2, SSE2; AVX2 -> SSE2
+simd_base = (cpu_family in ['x86', 'x86_64']) and config_h.get('HAVE_IMMINTRIN_H')
+have_avx512 = simd_base
+have_avx2 = simd_base or have_avx512
+have_sse2 = simd_base or have_avx2 or have_avx512
+config_h.set('HAVE_SSE2', have_sse2)
+config_h.set('HAVE_AVX2', have_avx2)
+config_h.set('HAVE_AVX512', have_avx512)
 
 if get_option('floating-point') == 'double'
     config_h.set('FAAC_PRECISION_DOUBLE', 1)

@@ -37,6 +37,12 @@ typedef void (*QuantizeFunc)(const faac_real * __restrict xr, int * __restrict x
 #if defined(HAVE_SSE2)
 extern void quantize_sse2(const faac_real * __restrict xr, int * __restrict xi, int n, faac_real sfacfix);
 #endif
+#if defined(HAVE_AVX2)
+extern void quantize_avx2(const faac_real * __restrict xr, int * __restrict xi, int n, faac_real sfacfix);
+#endif
+#if defined(HAVE_AVX512)
+extern void quantize_avx512(const faac_real * __restrict xr, int * __restrict xi, int n, faac_real sfacfix);
+#endif
 
 static void quantize_scalar(const faac_real * __restrict xr, int * __restrict xi, int n, faac_real sfacfix)
 {
@@ -59,11 +65,23 @@ static QuantizeFunc qfunc = quantize_scalar;
 
 void QuantizeInit(void)
 {
-#if defined(HAVE_SSE2)
+#if defined(HAVE_SSE2) || defined(HAVE_AVX2) || defined(HAVE_AVX512)
     CPUCaps caps = get_cpu_caps();
+#if defined(HAVE_AVX512)
+    if ((caps & CPU_CAP_AVX512F) && (caps & CPU_CAP_AVX512DQ))
+        qfunc = quantize_avx512;
+    else
+#endif
+#if defined(HAVE_AVX2)
+    if (caps & CPU_CAP_AVX2)
+        qfunc = quantize_avx2;
+    else
+#endif
+#if defined(HAVE_SSE2)
     if (caps & CPU_CAP_SSE2)
         qfunc = quantize_sse2;
     else
+#endif
 #endif
         qfunc = quantize_scalar;
 }
